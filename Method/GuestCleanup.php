@@ -24,7 +24,7 @@ final class GuestCleanup extends MethodCronjob
 		
 		$cut = Time::getDate(Application::$TIME - GWF_SESS_TIME);
 		
-		GDO_Session::table()->deleteWhere("sess_time<'$cut' OR sess_time IS NULL")->exec();
+		GDO_Session::table()->deleteWhere("sess_time<'$cut' OR sess_time IS NULL");
 		$sessions = $db->affectedRows();
 		$this->logNotice("Deleted $sessions sessions");
 		

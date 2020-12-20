@@ -26,7 +26,7 @@ final class CleanupSessions extends MethodCronjob
 	public function run()
 	{
 		$cut = Time::getDate(Application::$MICROTIME - GWF_SESS_TIME);
-		GDO_Session::table()->deleteWhere("sess_time < '{$cut}'")->exec();
+		GDO_Session::table()->deleteWhere("sess_time < '{$cut}'");
 		if (0 < ($deleted = Database::instance()->affectedRows()))
 		{
 			$this->log("Deleted $deleted sessions.");
