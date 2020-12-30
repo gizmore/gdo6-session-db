@@ -161,8 +161,6 @@ class GDO_Session extends GDO
 				return false;
 			}
 			$cookieValue = (string)$_COOKIE[self::$COOKIE_NAME];
-			
-			
 		}
 		
 		# Special first cookie
@@ -218,7 +216,7 @@ class GDO_Session extends GDO
 		}
 		
 		self::$INSTANCE = $session;
-		GDO_User::$CURRENT = $session->getUser();
+		GDO_User::setCurrent($session->getUser());
 		
 		return $session;
 	}
