@@ -25,7 +25,7 @@ class GDO_Session extends GDO
 {
 	const DUMMY_COOKIE_CONTENT = 'GDO_like_16_byte';
 	
-	private static $INSTANCE;
+	public static $INSTANCE;
 	public static $STARTED = false;
 	
 	private static $COOKIE_NAME = 'GDO6';
@@ -246,7 +246,8 @@ class GDO_Session extends GDO
 	
 	private static function setDummyCookie()
 	{
-		if (!Application::instance()->isCLI())
+	    $app = Application::instance();
+		if ( (!$app->isCLI()) && (!$app->isUnitTests()) )
 		{
 		    setcookie(self::$COOKIE_NAME, self::DUMMY_COOKIE_CONTENT, Application::$TIME+300, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		}
