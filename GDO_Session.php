@@ -28,6 +28,8 @@ class GDO_Session extends GDO
 	private static $INSTANCE;
 	public static $STARTED = false;
 	
+	public static function isDB() { return true; }
+	
 	private static $COOKIE_NAME = 'GDO6';
 	private static $COOKIE_DOMAIN = 'localhost';
 	private static $COOKIE_JS = true;
