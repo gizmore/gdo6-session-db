@@ -14,12 +14,14 @@ use GDO\Util\Math;
 use GDO\Core\Logger;
 use GDO\Net\GDT_Url;
 use GDO\Date\Time;
+use GDO\Util\Random;
 
 /**
  * GDO Database Session handler.
+ * 
  * @author gizmore
- * @version 6.10
- * @since 3.00
+ * @version 6.10.2
+ * @since 3.0.0
  */
 class GDO_Session extends GDO
 {
@@ -43,7 +45,7 @@ class GDO_Session extends GDO
 	public function gdoEngine() { return self::MYISAM; }
 	public function gdoColumns()
 	{
-		return array(
+		return [
 			GDT_AutoInc::make('sess_id'),
 			GDT_Token::make('sess_token')->notNull(),
 			GDT_Object::make('sess_user')->table(GDO_User::table()),
@@ -51,7 +53,7 @@ class GDO_Session extends GDO
 			GDT_EditedAt::make('sess_time'),
 			GDT_Url::make('sess_last_url'),
 			GDT_Serialize::make('sess_data'),
-		);
+		];
 	}
 	public function getID() { return $this->getVar('sess_id'); }
 	public function getToken() { return $this->getVar('sess_token'); }
@@ -68,7 +70,7 @@ class GDO_Session extends GDO
 	public static function user()
 	{
 		if ( (!($session = self::instance())) ||
-			(!($user = $session->getUser())) )
+			 (!($user = $session->getUser())) )
 		{
 			return GDO_User::ghost();
 		}
@@ -80,11 +82,14 @@ class GDO_Session extends GDO
 	 */
 	public static function instance()
 	{
-		if ( (!self::$INSTANCE) && (!self::$STARTED) )
-		{
-			self::$INSTANCE = self::start();
-			self::$STARTED = true; # only one try
-		}
+	    if (!self::$INSTANCE)
+	    {
+	        if (!self::$STARTED)
+	        {
+	            self::$STARTED = true; # only one try
+	            self::$INSTANCE = self::start();
+	        }
+	    }
 		return self::$INSTANCE;
 	}
 	
@@ -154,6 +159,12 @@ class GDO_Session extends GDO
 	 */
 	private static function start($cookieValue=true, $cookieIP=true)
 	{
+	    if (Application::instance()->isCLI())
+	    {
+	        self::createSession();
+	        return self::reloadCookie($_COOKIE[self::$COOKIE_NAME]);
+	    }
+	    
 		# Parse cookie value
 		if ($cookieValue === true)
 		{
@@ -171,7 +182,7 @@ class GDO_Session extends GDO
 			$session = self::createSession($cookieIP);
 		}
 		# Try to reload
-		elseif ($session = self::reloadCookie($cookieValue, $cookieIP))
+		elseif ($session = self::reloadCookie($cookieValue))
 		{
 		}
 		# Set special first dummy cookie
@@ -218,7 +229,11 @@ class GDO_Session extends GDO
 		}
 		
 		self::$INSTANCE = $session;
-		GDO_User::setCurrent($session->getUser());
+		
+		if (!Application::instance()->isCLI())
+		{
+    		GDO_User::setCurrent($session->getUser());
+		}
 		
 		return $session;
 	}
@@ -233,6 +248,10 @@ class GDO_Session extends GDO
 		if (!Application::instance()->isCLI())
 		{
 		    setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
+		}
+		else
+		{
+		    $_COOKIE[self::$COOKIE_NAME] = $this->cookieContent();
 		}
 	}
 	
@@ -255,12 +274,14 @@ class GDO_Session extends GDO
 		}
 	}
 	
-	private static function createSession()
+	private static function createSession($sessIP=null)
 	{
-		$session = self::table()->blank();
-		$session->setVar('sess_time', Time::getDate());
-		$session->insert();
+		$session = self::table()->blank([
+		    'sess_time' => Time::getDate(),
+		    'sess_ip' => $sessIP,
+		])->insert();
 		$session->setCookie();
 		return $session;
 	}
+	
 }
