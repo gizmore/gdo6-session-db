@@ -158,6 +158,11 @@ class GDO_Session extends GDO
 	 */
 	private static function start($cookieValue=true, $cookieIP=true)
 	{
+	    if (Application::instance()->isInstall())
+	    {
+	        return false;
+	    }
+	    
 	    if (Application::instance()->isCLI())
 	    {
 	        self::createSession();
@@ -270,21 +275,11 @@ class GDO_Session extends GDO
 	
 	private static function createSession($sessIP=null)
 	{
-	    try
-	    {
-    		$session = self::table()->blank([
-    		    'sess_time' => Time::getDate(),
-    		])->insert();
-    		$session->setCookie();
-    		return $session;
-	    }
-	    catch (\Throwable $e)
-	    {
-	        if (!Application::instance()->isCLI())
-	        {
-	            throw $e;
-	        }
-	    }
+		$session = self::table()->blank([
+		    'sess_time' => Time::getDate(),
+		])->insert();
+		$session->setCookie();
+		return $session;
 	}
 	
 }
