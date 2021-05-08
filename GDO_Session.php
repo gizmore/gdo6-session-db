@@ -19,7 +19,7 @@ use GDO\Date\Time;
  * GDO Database Session handler.
  * 
  * @author gizmore
- * @version 6.10.2
+ * @version 6.10.3
  * @since 3.0.0
  */
 class GDO_Session extends GDO
@@ -158,12 +158,14 @@ class GDO_Session extends GDO
 	 */
 	private static function start($cookieValue=true, $cookieIP=true)
 	{
-	    if (Application::instance()->isInstall())
+	    $app = Application::instance();
+	    if ($app->isInstall() ||
+	        $app->isCronjob() )
 	    {
 	        return false;
 	    }
 	    
-	    if (Application::instance()->isCLI())
+	    if ($app->isCLI())
 	    {
 	        self::createSession();
 	        return self::reloadCookie($_COOKIE[self::$COOKIE_NAME]);
@@ -248,7 +250,7 @@ class GDO_Session extends GDO
 		{
 		    setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		}
-		else
+		elseif (!Application::instance()->isCronjob())
 		{
 		    $_COOKIE[self::$COOKIE_NAME] = $this->cookieContent();
 		}
@@ -267,7 +269,8 @@ class GDO_Session extends GDO
 	private static function setDummyCookie()
 	{
 	    $app = Application::instance();
-		if ( (!$app->isCLI()) && (!$app->isUnitTests()) )
+		if ( (!$app->isCLI()) &&
+		     (!$app->isUnitTests()) )
 		{
 		    setcookie(self::$COOKIE_NAME, self::DUMMY_COOKIE_CONTENT, Application::$TIME+300, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		}
