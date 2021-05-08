@@ -270,11 +270,21 @@ class GDO_Session extends GDO
 	
 	private static function createSession($sessIP=null)
 	{
-		$session = self::table()->blank([
-		    'sess_time' => Time::getDate(),
-		])->insert();
-		$session->setCookie();
-		return $session;
+	    try
+	    {
+    		$session = self::table()->blank([
+    		    'sess_time' => Time::getDate(),
+    		])->insert();
+    		$session->setCookie();
+    		return $session;
+	    }
+	    catch (\Throwable $e)
+	    {
+	        if (!Application::instance()->isCLI())
+	        {
+	            throw $e;
+	        }
+	    }
 	}
 	
 }
