@@ -14,7 +14,6 @@ use GDO\Util\Math;
 use GDO\Core\Logger;
 use GDO\Net\GDT_Url;
 use GDO\Date\Time;
-use GDO\Util\Random;
 
 /**
  * GDO Database Session handler.
@@ -238,11 +237,6 @@ class GDO_Session extends GDO
 		return $session;
 	}
 	
-	public function ipCheck($cookieIP=true)
-	{
-		return true;
-	}
-	
 	private function setCookie()
 	{
 		if (!Application::instance()->isCLI())
@@ -262,7 +256,7 @@ class GDO_Session extends GDO
 	
 	private static function cookieSecure()
 	{
-		return false; # TODO: Evaluate protocoll and OR with setting.
+		return false; # @TODO: Evaluate protocoll and OR with setting.
 	}
 	
 	private static function setDummyCookie()
@@ -278,7 +272,6 @@ class GDO_Session extends GDO
 	{
 		$session = self::table()->blank([
 		    'sess_time' => Time::getDate(),
-		    'sess_ip' => $sessIP,
 		])->insert();
 		$session->setCookie();
 		return $session;
