@@ -3,6 +3,7 @@ namespace GDO\Session;
 
 use GDO\Core\Application;
 use GDO\Core\GDO;
+use GDO\DB\Database;
 use GDO\DB\GDT_AutoInc;
 use GDO\DB\GDT_EditedAt;
 use GDO\DB\GDT_Object;
@@ -90,6 +91,20 @@ class GDO_Session extends GDO
 	        }
 	    }
 		return self::$INSTANCE;
+	}
+	
+	private $lock;
+	public function setLock($lock)
+	{
+	    $this->lock = $lock;
+	}
+	
+	public function __destruct()
+	{
+	    if ($this->lock)
+	    {
+	        Database::instance()->unlock($this->lock);
+	    }
 	}
 	
 	public static function reset()
