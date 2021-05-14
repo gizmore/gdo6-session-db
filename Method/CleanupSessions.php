@@ -10,11 +10,9 @@ use GDO\Core\Application;
 /**
  * Cronjob that deletes old sessions.
  * 
- * @deprecated
- * 
  * @author gizmore
- * @version 6.10
- * @since 1.0
+ * @version 6.10.3
+ * @since 6.1.0
  * 
  * @see Login_Form
  * @see Login_Logout

@@ -3,7 +3,6 @@ namespace GDO\Session;
 
 use GDO\Core\Application;
 use GDO\Core\GDO;
-use GDO\DB\Database;
 use GDO\DB\GDT_AutoInc;
 use GDO\DB\GDT_EditedAt;
 use GDO\DB\GDT_Object;
@@ -15,6 +14,7 @@ use GDO\Util\Math;
 use GDO\Core\Logger;
 use GDO\Net\GDT_Url;
 use GDO\Date\Time;
+use GDO\DB\Database;
 
 /**
  * GDO Database Session handler.
@@ -63,18 +63,31 @@ class GDO_Session extends GDO
 	public function getData() { return $this->getValue('sess_data'); }
 	public function getLastURL() { return $this->getVar('sess_last_url'); }
 	
+	private $lock;
+	public function setLock($lock)
+	{
+	    $this->lock = $lock;
+	}
+	
+	public function __destruct()
+	{
+	    if ($this->lock)
+	    {
+	        Database::instance()->unlock($this->lock);
+	    }
+	}
+	
 	/**
 	 * Get current user or ghost.
 	 * @return GDO_User
 	 */
 	public static function user()
 	{
-		if ( (!($session = self::instance())) ||
-			 (!($user = $session->getUser())) )
+		if ($user = self::$INSTANCE->getUser())
 		{
-			return GDO_User::ghost();
+		    return $user;
 		}
-		return $user;
+		return GDO_User::ghost();
 	}
 	
 	/**
@@ -91,20 +104,6 @@ class GDO_Session extends GDO
 	        }
 	    }
 		return self::$INSTANCE;
-	}
-	
-	private $lock;
-	public function setLock($lock)
-	{
-	    $this->lock = $lock;
-	}
-	
-	public function __destruct()
-	{
-	    if ($this->lock)
-	    {
-	        Database::instance()->unlock($this->lock);
-	    }
 	}
 	
 	public static function reset()
@@ -173,14 +172,12 @@ class GDO_Session extends GDO
 	 */
 	private static function start($cookieValue=true, $cookieIP=true)
 	{
-	    $app = Application::instance();
-	    if ($app->isInstall() ||
-	        $app->isCronjob() )
+	    if (Application::instance()->isInstall())
 	    {
 	        return false;
 	    }
 	    
-	    if ($app->isCLI())
+	    if (Application::instance()->isCLI())
 	    {
 	        self::createSession();
 	        return self::reloadCookie($_COOKIE[self::$COOKIE_NAME]);
@@ -253,7 +250,11 @@ class GDO_Session extends GDO
 		
 		if (!Application::instance()->isCLI())
 		{
-    		GDO_User::setCurrent($session->getUser());
+		    if (!($user = $session->getUser()))
+		    {
+		        $user = GDO_User::ghost();
+		    }
+    		GDO_User::setCurrent($user);
 		}
 		
 		return $session;
@@ -265,7 +266,7 @@ class GDO_Session extends GDO
 		{
 		    setcookie(self::$COOKIE_NAME, $this->cookieContent(), Application::$TIME + self::$COOKIE_SECONDS, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		}
-		elseif (!Application::instance()->isCronjob())
+		else
 		{
 		    $_COOKIE[self::$COOKIE_NAME] = $this->cookieContent();
 		}
@@ -284,8 +285,7 @@ class GDO_Session extends GDO
 	private static function setDummyCookie()
 	{
 	    $app = Application::instance();
-		if ( (!$app->isCLI()) &&
-		     (!$app->isUnitTests()) )
+		if ( (!$app->isCLI()) && (!$app->isUnitTests()) )
 		{
 		    setcookie(self::$COOKIE_NAME, self::DUMMY_COOKIE_CONTENT, Application::$TIME+300, '/', self::$COOKIE_DOMAIN, self::cookieSecure(), !self::$COOKIE_JS);
 		}
