@@ -83,10 +83,13 @@ class GDO_Session extends GDO
 	 */
 	public static function user()
 	{
-		if ($user = self::$INSTANCE->getUser())
-		{
-		    return $user;
-		}
+	    if (self::$INSTANCE)
+	    {
+    		if ($user = self::$INSTANCE->getUser())
+    		{
+    		    return $user;
+    		}
+	    }
 		return GDO_User::ghost();
 	}
 	
