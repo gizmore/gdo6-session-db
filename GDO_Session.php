@@ -251,14 +251,14 @@ class GDO_Session extends GDO
 		
 		self::$INSTANCE = $session;
 		
-		if (!Application::instance()->isCLI())
-		{
+// 		if (!Application::instance()->isCLI())
+// 		{
 		    if (!($user = $session->getUser()))
 		    {
 		        $user = GDO_User::ghost();
 		    }
     		GDO_User::setCurrent($user);
-		}
+// 		}
 		
 		return $session;
 	}
