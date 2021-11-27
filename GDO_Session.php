@@ -4,6 +4,7 @@ namespace GDO\Session;
 use GDO\Core\Application;
 use GDO\Core\GDO;
 use GDO\DB\GDT_AutoInc;
+use GDO\DB\GDT_CreatedAt;
 use GDO\DB\GDT_EditedAt;
 use GDO\DB\GDT_Object;
 use GDO\Net\GDT_IP;
@@ -20,7 +21,7 @@ use GDO\DB\Database;
  * GDO Database Session handler.
  * 
  * @author gizmore
- * @version 6.10.3
+ * @version 6.11.0
  * @since 3.0.0
  */
 class GDO_Session extends GDO
@@ -50,6 +51,7 @@ class GDO_Session extends GDO
 			GDT_Token::make('sess_token')->notNull(),
 			GDT_Object::make('sess_user')->table(GDO_User::table()),
 			GDT_IP::make('sess_ip'),
+			GDT_CreatedAt::make('sess_created'),
 			GDT_EditedAt::make('sess_time'),
 			GDT_Url::make('sess_last_url'),
 			GDT_Serialize::make('sess_data'),

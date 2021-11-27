@@ -21,6 +21,11 @@ use GDO\Core\Application;
  */
 final class CleanupSessions extends MethodCronjob
 {
+	public function runAt()
+	{
+		return $this->runDailyAt(4);
+	}
+	
 	public function run()
 	{
 		$cut = Time::getDate(Application::$MICROTIME - GDO_SESS_TIME);
