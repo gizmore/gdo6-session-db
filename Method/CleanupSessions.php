@@ -11,7 +11,7 @@ use GDO\Core\Application;
  * Cronjob that deletes old sessions.
  * 
  * @author gizmore
- * @version 6.10.3
+ * @version 6.11.1
  * @since 6.1.0
  * 
  * @see Login_Form
@@ -21,18 +21,14 @@ use GDO\Core\Application;
  */
 final class CleanupSessions extends MethodCronjob
 {
-	public function runAt()
-	{
-		return $this->runDailyAt(4);
-	}
-	
 	public function run()
 	{
 		$cut = Time::getDate(Application::$MICROTIME - GDO_SESS_TIME);
 		GDO_Session::table()->deleteWhere("sess_time < '{$cut}'");
-		if (0 < ($deleted = Database::instance()->affectedRows()))
+		if ($deleted = Database::instance()->affectedRows())
 		{
 			$this->log("Deleted $deleted sessions.");
 		}
 	}
+	
 }

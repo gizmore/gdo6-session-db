@@ -14,14 +14,16 @@ use GDO\User\GDO_User;
 use GDO\Util\Math;
 use GDO\Core\Logger;
 use GDO\Net\GDT_Url;
-use GDO\Date\Time;
 use GDO\DB\Database;
+use GDO\Date\Time;
+use GDO\Util\Common;
+use GDO\Core\Website;
 
 /**
  * GDO Database Session handler.
  * 
  * @author gizmore
- * @version 6.11.0
+ * @version 6.11.1
  * @since 3.0.0
  */
 class GDO_Session extends GDO
@@ -33,7 +35,7 @@ class GDO_Session extends GDO
 	
 	public static function isDB() { return true; }
 	
-	private static $COOKIE_NAME = 'GDO6';
+	public static $COOKIE_NAME = 'GDO6';
 	private static $COOKIE_DOMAIN = 'localhost';
 	private static $COOKIE_JS = true;
 	private static $COOKIE_HTTPS = true;
@@ -117,23 +119,28 @@ class GDO_Session extends GDO
 		self::$STARTED = false;
 	}
 	
-	public static function init($cookieName='GDO6', $domain='localhost', $seconds=-1, $httpOnly=true, $https = false)
+	public static function init($cookieName='GDO6', $domain='localhost', $seconds=-1, $httpOnly=true, $https=false)
 	{
 		self::$COOKIE_NAME = $cookieName;
 		self::$COOKIE_DOMAIN = $domain;
-		self::$COOKIE_SECONDS = Math::clamp($seconds, -1, 1234567);
+		self::$COOKIE_SECONDS = Math::clamp($seconds, -1, Time::ONE_YEAR);
 		self::$COOKIE_JS = !$httpOnly;
-		self::$COOKIE_HTTPS = $https;
+		self::$COOKIE_HTTPS = $https && Website::isTLS();
+		if (Website::isTLS())
+		{
+			self::$COOKIE_NAME .= '_tls';
+		}
+		
 	}
 	
 	######################
 	### Get/Set/Remove ###
 	######################
-	public static function get($key, $initial=null)
+	public static function get($key, $default=null)
 	{
 		$session = self::instance();
 		$data = $session ? $session->getData() : [];
-		return isset($data[$key]) ? $data[$key] : $initial;
+		return isset($data[$key]) ? $data[$key] : $default;
 	}
 	
 	public static function set($key, $value)
@@ -177,12 +184,13 @@ class GDO_Session extends GDO
 	 */
 	private static function start($cookieValue=true, $cookieIP=true)
 	{
-	    if (Application::instance()->isInstall())
+		$app = Application::instance();
+	    if ($app->isInstall())
 	    {
 	        return false;
 	    }
 	    
-	    if (Application::instance()->isCLI())
+	    if ( ($app->isCLI()) && (!$app->isWebsocket()) )
 	    {
 	        self::createSession();
 	        return self::reloadCookie($_COOKIE[self::$COOKIE_NAME]);
@@ -253,14 +261,15 @@ class GDO_Session extends GDO
 		
 		self::$INSTANCE = $session;
 		
-// 		if (!Application::instance()->isCLI())
-// 		{
+		$app = Application::instance();
+		if ( (!$app->isCLI()) || ($app->isWebsocket()) )
+		{
 		    if (!($user = $session->getUser()))
 		    {
 		        $user = GDO_User::ghost();
 		    }
     		GDO_User::setCurrent($user);
-// 		}
+		}
 		
 		return $session;
 	}
@@ -284,7 +293,7 @@ class GDO_Session extends GDO
 	
 	private static function cookieSecure()
 	{
-		return false; # @TODO: Evaluate protocoll and OR with setting.
+		return self::$COOKIE_HTTPS;
 	}
 	
 	private static function setDummyCookie()
